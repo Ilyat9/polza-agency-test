@@ -1,0 +1,6 @@
+test@gmail.com
+john.doe@outlook.com
+admin@example.com
+invalid.email
+user@nonexistent-domain-xyz.com
+contact@protonmail.com
