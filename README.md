@@ -50,7 +50,7 @@ CLI интерфейс и все async функции сохранены
 Пример запуска:
 
 ```bash
-python single_script_validator.py emails.txt --concurrent 50 --retries 3
+python single_script_validator.py data\emails.txt --concurrent 50 --retries 3
 ```
 ---
 
