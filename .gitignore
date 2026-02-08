@@ -46,6 +46,7 @@ logs/
 validation_results*.txt
 validation_results*.json
 *.csv
+out.txt
 
 # OS
 .DS_Store
