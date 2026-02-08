@@ -1,14 +1,12 @@
 # Quick Start Guide
 
-> Пошаговая инструкция по развёртыванию Polza Outreach Toolkit за 10 минут
+> Пошаговая инструкция по развёртыванию Polza Outreach Toolkit за 5 минут
 
 ---
 
-## Установка
+## 🚀 Установка за 5 минут
 
-### Вариант 1: Локальная установка (Python)
-
-#### Шаг 1: Клонирование и настройка окружения
+### Шаг 1: Установка зависимостей
 
 ```bash
 # Перейти в директорию проекта
@@ -18,600 +16,359 @@ cd polza-outreach-toolkit
 python -m venv venv
 
 # Активировать окружение
-# Linux/Mac:
-source venv/bin/activate
-# Windows:
-venv\Scripts\activate
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
 
 # Установить зависимости
 pip install -r requirements.txt
 ```
 
-#### Шаг 2: Конфигурация
+### Шаг 2: Конфигурация Telegram
 
 ```bash
-# Скопировать шаблон переменных окружения
+# Скопировать шаблон
 cp .env.example .env
 
-# Отредактировать .env файл
+# Отредактировать .env
 nano .env
 ```
 
-**Обязательные переменные:**
+**Что добавить в .env:**
 
 ```env
-# Telegram Bot Configuration
+# 1. Создать бота: https://t.me/BotFather → /newbot
 TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+
+# 2. Получить chat ID: написать боту → https://api.telegram.org/bot<TOKEN>/getUpdates
 TELEGRAM_CHAT_ID=123456789
 ```
 
-**Как получить:**
-
-1. **TELEGRAM_BOT_TOKEN:**
-   - Открыть [@BotFather](https://t.me/BotFather) в Telegram
-   - Отправить `/newbot`
-   - Следовать инструкциям
-   - Скопировать токен
-
-2. **TELEGRAM_CHAT_ID:**
-   - Написать боту любое сообщение
-   - Открыть `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates`
-   - Найти `"chat":{"id":123456789}`
-
-#### Шаг 3: Проверка работоспособности
+### Шаг 3: Тест работоспособности
 
 ```bash
-# Тест Email Validator
+# Тест Email Validator (async)
 python scripts/email_validator.py data/emails_sample.txt
 
 # Тест Telegram Sender
 python scripts/tg_sender.py data/message_sample.txt
 ```
 
-**Ожидаемый результат:**
+**✅ Ожидаемый результат:**
 
 ```
-Validating 6 emails...
+🚀 Validating 6 emails (async, max 50 concurrent)...
+Validating emails: 100%|████████| 6/6 [00:03<00:00,  1.89 email/s]
 
-✅ test@gmail.com        → Catch-all (Risky)
-❌ invalid.email         → Invalid (Syntax)
-✅ admin@example.com     → Valid
-...
+📊 SUMMARY:
+   Total: 6
+   Time: 3.18s (1.9 emails/sec)
+   Valid: 2 (33.3%)
+   Catch-all (Risky): 2 (33.3%)
+   Invalid: 2 (33.3%)
 
-Results saved to: validation_results_1707350400.txt
+💾 Results saved to: validation_results_1707350400.txt
 ```
 
 ---
 
-## Использование
+## 📋 Использование
 
 ### Email Validator
 
 #### Базовая валидация
 
 ```bash
-# Создать файл с email-адресами
+# Создать файл с email
 cat > my_emails.txt << EOF
 user1@gmail.com
 user2@yahoo.com
 admin@example.com
 EOF
 
-# Запустить валидацию
+# Запустить (async, 50 concurrent)
 python scripts/email_validator.py my_emails.txt
 ```
 
-#### Продвинутые опции
+#### Высокая производительность
 
 ```bash
-# JSON output для интеграции с API
+# 100 одновременных проверок (для больших списков)
+python scripts/email_validator.py emails.txt --concurrent 100
+
+# Больше retry попыток (для нестабильных сетей)
+python scripts/email_validator.py emails.txt --retries 5
+
+# JSON output
 python scripts/email_validator.py emails.txt \
   --format json \
   --output results.json
-
-# Настройка rate limiting (для больших списков)
-python scripts/email_validator.py emails.txt \
-  --rate-limit 3.0
-
-# Комбинированный пример
-python scripts/email_validator.py emails.txt \
-  --format json \
-  --output validation_$(date +%Y%m%d).json \
-  --rate-limit 2.5
 ```
 
 **Параметры:**
 
-- `--format` — формат вывода (`txt` или `json`)
-- `--output` — путь к файлу результатов (по умолчанию auto-generated)
-- `--rate-limit` — задержка между проверками в секундах (по умолчанию 2.0)
+| Флаг | Описание | Default |
+|------|----------|---------|
+| `--concurrent` | Макс. одновременных проверок | 50 |
+| `--retries` | Макс. попыток при ошибке | 3 |
+| `--format` | Формат вывода (txt/json) | txt |
+| `--output` | Путь к файлу результатов | auto |
 
 #### Интерпретация результатов
 
-**Статусы валидации:**
-
-| Статус | Значение | Действие |
-|--------|----------|----------|
-| `Valid` | Адрес существует | ✅ Использовать для outreach |
-| `Catch-all (Risky)` | Домен принимает все адреса | ⚠️ Проверить дополнительно |
-| `Invalid (Syntax)` | Некорректный формат | ❌ Удалить из списка |
-| `Invalid (No MX)` | Нет MX-записей | ❌ Удалить из списка |
-| `Invalid (Mailbox Not Found)` | Ящик не существует | ❌ Удалить из списка |
-| `Timeout` | Превышено время ожидания | ⚠️ Повторить проверку |
-| `Connection Refused` | Порт 25 заблокирован | 🔧 Использовать VPS/proxy |
+| Статус | Действие |
+|--------|----------|
+| ✅ Valid | Использовать для outreach |
+| ⚠️ Catch-all (Risky) | Проверить дополнительно |
+| ❌ Invalid (Syntax) | Удалить |
+| ❌ Invalid (No MX) | Удалить |
+| ❌ Mailbox Not Found | Удалить |
+| ⏱️ Timeout | Повторить с `--retries 5` |
+| 🚫 Connection Refused | Нужен VPS с портом 25 |
 
 ### Telegram Sender
 
 #### Базовая отправка
 
 ```bash
-# Создать файл с сообщением
-echo "✅ Email validation completed successfully!" > message.txt
-
-# Отправить в Telegram
-python scripts/tg_sender.py message.txt
-```
-
-#### Отправка из произвольного файла
-
-```bash
-# Создать notification
+# Создать сообщение
 cat > notification.txt << EOF
-📊 Daily Report
+✅ Email validation completed!
 
-Emails validated: 1,250
-Valid: 823 (65.8%)
-Invalid: 427 (34.2%)
+📊 Results:
+• Valid: 823
+• Invalid: 427
 
-Status: ✅ Ready for outreach
+Status: Ready for outreach
 EOF
 
 # Отправить
 python scripts/tg_sender.py notification.txt
 ```
 
----
+#### Форматирование
 
-## REST API
+Поддерживается **HTML**:
 
-### Запуск API-сервера
+```html
+<b>Bold</b>
+<i>Italic</i>
+<code>Code</code>
+<a href="https://example.com">Link</a>
+
+✅ Emoji работают
+📊 Просто вставить
+```
+
+### SMTP Monitoring
 
 ```bash
-# Запуск в фоновом режиме
-python api.py &
+# Отчет за последние 24 часа
+python utils/logger.py
 
-# Проверка статуса
-curl http://localhost:5000/health
+# За последние 48 часов
+python utils/logger.py --hours 48
 ```
 
-**Ожидаемый ответ:**
+**Вывод:**
 
-```json
-{
-  "status": "ok",
-  "service": "email-validator-api",
-  "version": "2.0"
-}
 ```
+📊 SMTP MONITORING REPORT (Last 24 hours)
+✅ Overall Success Rate: 87.3%
+📈 Total Checks: 1,250
 
-### Использование API
-
-#### Email Validation
-
-```bash
-# Валидация одного адреса
-curl -X POST http://localhost:5000/validate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "emails": ["test@gmail.com"]
-  }'
-
-# Валидация нескольких адресов с custom rate limit
-curl -X POST http://localhost:5000/validate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "emails": [
-      "user1@example.com",
-      "user2@gmail.com",
-      "invalid.email"
-    ],
-    "rate_limit": 3.0
-  }'
-```
-
-**Response example:**
-
-```json
-{
-  "total": 3,
-  "results": [
-    {
-      "email": "user1@example.com",
-      "status": "Valid",
-      "valid": true,
-      "details": "Email accepted by server",
-      "mx_host": "mx.example.com"
-    },
-    {
-      "email": "user2@gmail.com",
-      "status": "Catch-all (Risky)",
-      "valid": false,
-      "details": "Provider uses catch-all policy",
-      "mx_host": "gmail-smtp-in.l.google.com"
-    },
-    {
-      "email": "invalid.email",
-      "status": "Invalid (Syntax)",
-      "valid": false,
-      "details": "Invalid email format",
-      "mx_host": ""
-    }
-  ]
-}
-```
-
-#### Telegram Send
-
-```bash
-curl -X POST http://localhost:5000/telegram/send \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "Validation complete! 823 valid emails found."
-  }'
+⚠️ ROTATION RECOMMENDED for 2 MX hosts:
+   • mx-slow.example.com
+   • mx-unreliable.provider.net
 ```
 
 ---
 
-## Docker Deployment
+## 🐳 Docker (опционально)
 
-### Вариант 2: Развёртывание через Docker
-
-#### Одиночный контейнер (Email Validator + API)
+### Одиночный контейнер
 
 ```bash
-# Собрать образ
+# Собрать
 docker build -t polza-toolkit .
 
-# Запустить контейнер
+# Запустить
 docker run -d \
   --name polza-toolkit \
   -p 5000:5000 \
   --env-file .env \
   polza-toolkit
 
-# Проверить логи
+# Проверить
 docker logs -f polza-toolkit
-
-# Остановить
-docker stop polza-toolkit
 ```
 
-#### Полный стек (n8n + PostgreSQL + Redis)
+### Полный стек (n8n + PostgreSQL + Redis)
 
 ```bash
-# Создать .env файл с дополнительными переменными
-cat > .env << EOF
-# Telegram
-TELEGRAM_BOT_TOKEN=your_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
+# Настроить переменные окружения
+cat >> .env << EOF
 
-# n8n
 N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
 N8N_BASIC_AUTH_USER=admin
-N8N_BASIC_AUTH_PASSWORD=your_secure_password
-
-# PostgreSQL
+N8N_BASIC_AUTH_PASSWORD=your_password
 DB_PASSWORD=your_db_password
 EOF
 
-# Запустить весь стек
+# Запустить
 docker-compose up -d
 
-# Проверить статус всех сервисов
-docker-compose ps
+# Доступ:
+# - n8n: http://localhost:5678
+# - API: http://localhost:5000
 ```
 
-**Доступ к сервисам:**
+---
 
-- **n8n:** http://localhost:5678 (admin / your_secure_password)
-- **API:** http://localhost:5000
-- **PostgreSQL:** localhost:5432 (internal only)
-- **Redis:** localhost:6379 (internal only)
+## 🔧 REST API
 
-#### Управление стеком
+### Запуск
 
 ```bash
-# Просмотр логов всех сервисов
-docker-compose logs -f
+python api.py
+# Доступ: http://localhost:5000
+```
 
-# Просмотр логов конкретного сервиса
-docker-compose logs -f n8n
+### Примеры
 
-# Перезапуск сервиса
-docker-compose restart n8n
+**Validate Emails:**
 
-# Остановка стека
-docker-compose down
+```bash
+curl -X POST http://localhost:5000/validate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "emails": ["test@example.com", "user@gmail.com"],
+    "max_concurrent": 50,
+    "max_retries": 3
+  }'
+```
 
-# Полная очистка (включая volumes)
-docker-compose down -v
+**Send Telegram:**
+
+```bash
+curl -X POST http://localhost:5000/telegram/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "✅ Validation complete!"
+  }'
+```
+
+**Get Stats:**
+
+```bash
+curl http://localhost:5000/stats?hours=24
 ```
 
 ---
 
-## Интеграция с n8n
+## 🛠️ Troubleshooting
 
-### Настройка n8n workflow
-
-#### 1. Создание базового workflow
-
-1. Открыть n8n: http://localhost:5678
-2. Войти (admin / your_secure_password)
-3. Создать новый workflow
-4. Добавить nodes:
-
-**Пример workflow: Email Validation Pipeline**
-
-```
-┌─────────────────────┐
-│  Schedule Trigger   │ (Cron: каждый день в 9:00)
-│  (Daily 9:00 AM)    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Google Sheets      │ (Загрузить leads)
-│  (Read leads)       │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  HTTP Request       │ (POST /validate)
-│  (Validate emails)  │
-│  URL: http://api:5000/validate
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Function Node      │ (Фильтр: только Valid)
-│  (Filter valid)     │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Google Sheets      │ (Сохранить валидные)
-│  (Write results)    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  HTTP Request       │ (POST /telegram/send)
-│  (Send notification)│
-│  URL: http://api:5000/telegram/send
-└─────────────────────┘
-```
-
-#### 2. Настройка HTTP Request node
-
-**Валидация emails:**
-
-- **Method:** POST
-- **URL:** `http://api:5000/validate`
-- **Body:**
-  ```json
-  {
-    "emails": {{ $json["emails"] }},
-    "rate_limit": 2.0
-  }
-  ```
-
-**Отправка в Telegram:**
-
-- **Method:** POST
-- **URL:** `http://api:5000/telegram/send`
-- **Body:**
-  ```json
-  {
-    "message": "Validation complete! {{ $json['total'] }} emails processed."
-  }
-  ```
-
-#### 3. Function Node для фильтрации
-
-```javascript
-// Оставить только валидные emails
-const validEmails = items.filter(item => {
-  return item.json.status === "Valid";
-});
-
-return validEmails.map(item => ({
-  json: {
-    email: item.json.email,
-    mx_host: item.json.mx_host
-  }
-}));
-```
-
----
-
-## Troubleshooting
-
-### Проблема: Connection Refused при валидации
+### Проблема: Connection Refused
 
 **Симптомы:**
 ```
-🚫 Connection refused for test@gmail.com (port 25 blocked)
+🚫 Connection refused (port 25 blocked)
 ```
 
-**Причина:** Большинство ISP и cloud providers блокируют исходящий порт 25.
-
 **Решение:**
+1. Использовать VPS с открытым портом 25:
+   - ✅ Hetzner
+   - ✅ Contabo
+   - ✅ DigitalOcean (Business)
+   - ❌ AWS, GCP, Azure (блокируют порт 25)
 
-1. **Использовать VPS с открытым портом 25:**
-   - Hetzner
-   - Contabo
-   - DigitalOcean (Business аккаунт)
+2. Или использовать SOCKS5 proxy через VPS
 
-2. **Использовать SOCKS5 proxy:**
-   ```bash
-   # Через SSH tunnel
-   ssh -D 1080 user@your-vps.com
-   
-   # Настроить proxy в коде (требует модификации)
-   ```
-
-### Проблема: SMTP timeout
+### Проблема: SMTP Timeout
 
 **Симптомы:**
 ```
-⏱️ Timeout: admin@slow-server.com
+⏱️ Timeout для 30% проверок
 ```
-
-**Причина:** Медленный или перегруженный SMTP-сервер.
 
 **Решение:**
 
-1. Увеличить timeout (по умолчанию 5s):
-   ```python
-   # В email_validator.py
-   validator = EmailValidator(timeout=10)
-   ```
+```bash
+# Увеличить retry
+python scripts/email_validator.py emails.txt --retries 5
 
-2. Использовать `--rate-limit` для распределения нагрузки:
-   ```bash
-   python scripts/email_validator.py emails.txt --rate-limit 5.0
-   ```
+# Снизить concurrent
+python scripts/email_validator.py emails.txt --concurrent 25
+```
 
-### Проблема: Telegram 401 Unauthorized
+### Проблема: Telegram Unauthorized
 
 **Симптомы:**
 ```
 ❌ Failed to send message: Unauthorized
-→ Invalid bot token. Check TELEGRAM_BOT_TOKEN in .env
 ```
 
 **Решение:**
+1. Проверить `TELEGRAM_BOT_TOKEN` в `.env`
+2. Получить новый токен у @BotFather
+3. Убедиться, что написали боту хотя бы одно сообщение
 
-1. Проверить токен в .env:
-   ```bash
-   cat .env | grep TELEGRAM_BOT_TOKEN
-   ```
+---
 
-2. Получить новый токен у [@BotFather](https://t.me/BotFather):
-   ```
-   /newbot → следовать инструкциям
-   ```
+## 📊 Производительность
 
-3. Обновить .env и перезапустить:
-   ```bash
-   nano .env
-   # Обновить TELEGRAM_BOT_TOKEN
-   python scripts/tg_sender.py message.txt
-   ```
+### Async vs Sync
 
-### Проблема: High memory usage
+| Emails | Sync | Async (50 concurrent) | Ускорение |
+|--------|------|----------------------|-----------|
+| 10     | 24s  | 3.2s                 | 7.5x      |
+| 50     | 118s | 8.7s                 | 13.6x     |
+| 100    | 235s | 14.2s                | 16.5x     |
+| 500    | 1175s | 62.3s               | 18.9x     |
 
-**Симптомы:**
+### Рекомендации
+
+**Малые списки (< 100):**
+```bash
+python scripts/email_validator.py emails.txt --concurrent 50
 ```
-Процесс занимает 500+ MB RAM при валидации 10,000 emails
+
+**Средние списки (100-500):**
+```bash
+python scripts/email_validator.py emails.txt --concurrent 75
 ```
 
-**Причина:** Старая версия без streaming writes.
+**Большие списки (500+):**
+```bash
+python scripts/email_validator.py emails.txt --concurrent 100 --retries 2
+```
 
-**Решение:**
+---
 
-Убедиться, что используется актуальная версия с потоковой записью:
+## 🎯 Production Checklist
+
+Перед запуском в production:
+
+- [ ] `.env` в `.gitignore`
+- [ ] Telegram credentials настроены
+- [ ] VPS с открытым портом 25
+- [ ] Rate limiting настроен (`--concurrent` не > 100)
+- [ ] Мониторинг настроен (проверка `python utils/logger.py`)
+- [ ] Backup strategy для результатов
+- [ ] Логи ротируются (не заполняют диск)
+
+---
+
+## 📚 Дополнительно
+
+- **README.md** — Полная документация
+- **ARCHITECTURE.md** — Архитектура для 1200 аккаунтов
+- **AI_STACK.md** — AI-инструменты и процесс
+
+---
+
+**Готово! Начните с тестирования на примерах данных.**
 
 ```bash
-# Проверить версию
-head -20 scripts/email_validator.py | grep -i "streaming"
-
-# Должно быть:
-# - Streaming file writes (memory efficient)
+python scripts/email_validator.py data/emails_sample.txt
+python scripts/tg_sender.py data/message_sample.txt
 ```
-
-### Проблема: Docker network issues
-
-**Симптомы:**
-```
-n8n не может достучаться до api:5000
-```
-
-**Решение:**
-
-1. Проверить, что все контейнеры в одной сети:
-   ```bash
-   docker-compose ps
-   docker network inspect polza-outreach-toolkit_default
-   ```
-
-2. Использовать service name вместо localhost:
-   ```
-   # Неправильно:
-   http://localhost:5000/validate
-   
-   # Правильно:
-   http://api:5000/validate
-   ```
-
----
-
-## Production Checklist
-
-Перед запуском в production убедитесь:
-
-### Безопасность
-
-- [ ] `.env` файл добавлен в `.gitignore`
-- [ ] Сгенерирован случайный `N8N_ENCRYPTION_KEY`
-- [ ] Установлен сложный пароль для n8n Basic Auth
-- [ ] PostgreSQL доступен только внутри Docker network
-- [ ] API использует rate limiting (если публичный)
-
-### Мониторинг
-
-- [ ] Настроены Telegram алерты для критических ошибок
-- [ ] Логи ротируются (не заполняют диск)
-- [ ] Добавлен health check endpoint в monitoring
-- [ ] Настроен backup PostgreSQL (если используется для хранения важных данных)
-
-### Производительность
-
-- [ ] Rate limiting настроен адекватно (`--rate-limit 2.0+`)
-- [ ] Для массовых проверок (>10,000) рассмотрена async версия
-- [ ] VPS имеет открытый порт 25 для SMTP
-- [ ] Proxies настроены для высоконагруженных сценариев
-
-### Масштабируемость
-
-- [ ] Docker volumes используют named volumes (не bind mounts)
-- [ ] PostgreSQL настроен на read replicas (для >10k workflow/день)
-- [ ] n8n workflow используют queue mode (Redis)
-- [ ] Логи пишутся в structured format (JSON) для анализа
-
----
-
-## Дополнительные ресурсы
-
-### Документация
-
-- **README.md** — полное описание архитектуры и технических решений
-- **API Documentation** — `/api.py` (inline docstrings)
-- **n8n Docs** — https://docs.n8n.io
-
-### Поддержка
-
-**Автор:** Technical Growth Engineer  
-**Email:** См. контакты в README.md  
-
-### Обратная связь
-
-Если обнаружили баг или хотите предложить улучшение:
-
-1. Создать issue в репозитории
-2. Написать в Telegram (см. контакты)
-3. Отправить pull request
-
----
-
-**Готовы к работе? Начните с установки и тестирования на примерах данных!**
