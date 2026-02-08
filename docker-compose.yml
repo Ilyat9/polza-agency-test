@@ -96,21 +96,21 @@ services:
       - polza-network
 
   # Email validator service (optional API mode)
-  # validator-api:
-  #   build: .
-  #   container_name: validator-api
-  #   ports:
-  #     - "5000:5000"
-  #   environment:
-  #     - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-  #     - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
-  #   volumes:
-  #     - ./data:/app/data
-  #     - ./logs:/app/logs
-  #   restart: unless-stopped
-  #   networks:
-  #     - polza-network
-  #   command: python api.py
+  validator-api:
+  build: .
+  container_name: validator-api
+  ports:
+  - "5000:5000"
+  environment:
+  - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+  - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+  volumes:
+  - ./data:/app/data
+  - ./logs:/app/logs
+  restart: unless-stopped
+  networks:
+  - polza-network
+  command: python api.py
 
 volumes:
   n8n_data:
