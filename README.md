@@ -3,8 +3,6 @@
 > **Production-ready email validation и Telegram интеграция для масштабных аутрич-кампаний**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Async](https://img.shields.io/badge/async-enabled-green.svg)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 
 ---
 
@@ -47,13 +45,13 @@
 
 ```bash
 # 1. Клонировать репозиторий
-git clone https://github.com/your-username/polza-outreach-toolkit.git
-cd polza-outreach-toolkit
+git clone https://github.com/Ilyat9/polza-agency-test.git
+cd polza-agency-test
 
 # 2. Создать виртуальное окружение
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
+venv\Scripts\activate     # Windows
 
 # 3. Установить зависимости
 pip install -r requirements.txt
@@ -80,7 +78,6 @@ tqdm>=4.66.0            # Progress bars
 flask>=3.0.0
 
 # Development (optional)
-pytest>=7.4.0
 black>=23.0.0
 mypy>=1.5.0
 ```
@@ -95,6 +92,7 @@ mypy>=1.5.0
 
 ```bash
 # Создать файл с email-адресами (один email на строку)
+# Windows users: edit .env manually
 cat > emails.txt << EOF
 test@gmail.com
 admin@example.com
@@ -483,19 +481,6 @@ python scripts/email_validator.py emails.txt --retries 1
 
 ---
 
-## 🧪 Тестирование
-
-```bash
-# Запустить тесты (если настроен pytest)
-pytest tests/
-
-# Тест на примерах данных
-python scripts/email_validator.py data/emails_sample.txt
-python scripts/tg_sender.py data/message_sample.txt
-```
-
----
-
 ## 🛠️ Troubleshooting
 
 ### Connection Refused (port 25)
@@ -545,33 +530,6 @@ python scripts/email_validator.py emails.txt --concurrent 25
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Архитектура для 1200 аккаунтов
 - **[AI_STACK.md](./AI_STACK.md)** — AI-инструменты и процесс разработки
 - **[QUICKSTART.md](./QUICKSTART.md)** — Пошаговые инструкции
-
----
-
-## 🤝 Вклад
-
-Если обнаружили баг или хотите предложить улучшение:
-
-1. Создать issue с описанием
-2. Fork репозитория
-3. Создать feature branch
-4. Отправить pull request
-
----
-
-## 📝 Лицензия
-
-MIT License - см. [LICENSE](./LICENSE)
-
----
-
-## 👨‍💻 Автор
-
-**Technical Growth Engineer**
-
-Тестовое задание для Polza Agency
-
-**Built with Claude 3.5 Sonnet for rapid development**
 
 ---
 
